@@ -3,7 +3,6 @@ from IPython import get_ipython
 
 from sfdxmagic.runner import execute_sfdx
 
-# TODO
 def parse_magic_invocation(line):
     """
     Parses the magic invocation for the commands
@@ -14,14 +13,16 @@ def parse_magic_invocation(line):
     %%sfdx:cmd {var?} {...options}
 
     """
-    args = { "variable": None }
+    [variable, *sfdx_args] = line.split(" ")
+    args = { "variable": variable if variable != '' else None, "sfdx_args": " ".join(sfdx_args) }
     return args
 
 def execute_query(line, query):
     args = parse_magic_invocation(line)
 
-    results = execute_sfdx("force:data:soql:query -q \"{}\"".format(query))
-    results_df = pd.DataFrame(results)
+    results = execute_sfdx("force:data:soql:query -q \"{}\" {}".format(query, args.get("sfdx_args")))
+    results_df = pd.DataFrame(results['records'])
+    del results_df['attributes']
 
     if args.get('variable'):
         get_ipython().push({ args.get("variable"): results_df})
