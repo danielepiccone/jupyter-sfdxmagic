@@ -15,16 +15,17 @@ def _run_sfdx(arguments):
 
     return json.loads(cmd.stdout)
 
+def raise_for_status(response):
+    if response.get('status') == 0:
+        return response.get('result')
+    else:
+        raise Exception("Operation returned an error response\n\n{}".format(response))
+
 def execute_sfdx(command):
     display("Executing {}".format(command))
-
     res  = _run_sfdx(command)
-
     clear_output()
+    return res
 
-    if res.get('status') == 0:
-        return res.get('result')
-    else:
-        raise Exception("Operation returned an error response\n\n{}".format(res))
 
 

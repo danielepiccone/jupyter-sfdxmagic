@@ -1,7 +1,9 @@
 import pandas as pd
+import tempfile
 from IPython import get_ipython
 
-from sfdxmagic.runner import execute_sfdx
+from sfdxmagic.runner import execute_sfdx, raise_for_status
+
 
 def parse_magic_invocation(line):
     """
@@ -13,22 +15,61 @@ def parse_magic_invocation(line):
     %%sfdx:cmd {var?} {...options}
 
     """
-    [variable, *sfdx_args] = line.split(" ")
-    args = { "variable": variable if variable != '' else None, "sfdx_args": " ".join(sfdx_args) }
-    return args
+    args = {
+        "variable": None,
+        "sfdx_args": ""
+    }
+
+    line = line.strip()
+
+    if line.startswith('-'):
+        args['sfdx_args'] = line
+        return args
+    else:
+        [variable, *sfdx_args] = line.split(" ")
+        args = {
+            "variable": variable,
+            "sfdx_args": " ".join(sfdx_args),
+        }
+        return args
+
 
 def execute_query(line, query):
     args = parse_magic_invocation(line)
 
-    results = execute_sfdx("force:data:soql:query -q \"{}\" {}".format(query, args.get("sfdx_args")))
-    results_df = pd.DataFrame(results['records'])
-    del results_df['attributes']
+    response = execute_sfdx(
+        'force:data:soql:query -q "{}" {}'.format(query, args.get("sfdx_args"))
+    )
+    raise_for_status(response)
+    results_df = pd.DataFrame(response["result"]["records"])
+    del results_df["attributes"]
 
-    if args.get('variable'):
-        get_ipython().push({ args.get("variable"): results_df})
+    if args.get("variable"):
+        get_ipython().push({args.get("variable"): results_df})
+        return None
 
     return results_df.head()
 
+
 def execute_apex(line, query):
-    # TODO
-    pass
+    if not query.strip():
+        return None
+
+    args = parse_magic_invocation(line)
+
+    with tempfile.NamedTemporaryFile() as fp:
+        fp.write(query.encode('utf8'))
+        fp.flush()
+        response = execute_sfdx(
+            'force:apex:execute -f {} {}'.format(fp.name, args.get("sfdx_args"))
+        )
+
+    if response['status'] == 0:
+        loglines = response['result']['logs']
+        if args.get("variable"):
+            get_ipython().push({args.get("variable"): loglines})
+            return None
+        else:
+            return loglines
+    else:
+        return response
