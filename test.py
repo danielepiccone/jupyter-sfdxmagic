@@ -1,6 +1,7 @@
 import unittest
+import pandas as pd
 from unittest.mock import patch
-from sfdxmagic.functions import parse_magic_invocation, execute_query
+from sfdxmagic.functions import parse_magic_invocation, execute_query, execute_apex
 
 
 class TestInvocation(unittest.TestCase):
@@ -16,7 +17,7 @@ class TestInvocation(unittest.TestCase):
 
 @patch('sfdxmagic.functions.execute_sfdx')
 class TestQuery(unittest.TestCase):
-    def test_query(self, execute_sfdx):
+    def test_base(self, execute_sfdx):
         execute_sfdx.return_value = {
             "status": 0,
             "result": {
@@ -28,6 +29,55 @@ class TestQuery(unittest.TestCase):
         }
         result = execute_query("-u user", "SELECT Id FROM Account LIMIT 1")
         execute_sfdx.assert_called_with('force:data:soql:query -q "SELECT Id FROM Account LIMIT 1" -u user')
+        assert type(result) == pd.DataFrame
+
+    @patch('sfdxmagic.functions.get_ipython')
+    def test_assign_to_scope(self, get_ipython, execute_sfdx):
+        execute_sfdx.return_value = {
+            "status": 0,
+            "result": {
+                "records": [{
+                    "Id": "12345",
+                    "attributes": {}
+                }]
+            }
+        }
+        result = execute_query("var -u user", "SELECT Id FROM Account LIMIT 1")
+        get_ipython().push.assert_called()
+        push_args = get_ipython().push.call_args[0][0]
+        assert 'var' in push_args, "should assign var to the scope"
+        assert type(push_args['var']) == pd.DataFrame, "should be a DataFrame"
+
+@patch('sfdxmagic.functions.execute_sfdx')
+class TestAnonymousApex(unittest.TestCase):
+    def test_base(self, execute_sfdx):
+        execute_sfdx.return_value = {
+            "status": 0,
+            "result": {
+                "logs": "line1\nline2"
+            }
+        }
+        result = execute_apex("-u user", "System.debug('test');")
+        execute_sfdx.assert_called()
+        sfdx_args = execute_sfdx.call_args[0][0]
+        assert sfdx_args.startswith('force:apex:execute'), 'should call apex execution'
+        assert sfdx_args.endswith('-u user'), 'should executed against a specific org'
+        assert type(result) == str
+
+    @patch('sfdxmagic.functions.get_ipython')
+    def test_assign_to_scope(self, get_ipython, execute_sfdx):
+        execute_sfdx.return_value = {
+            "status": 0,
+            "result": {
+                "logs": "line1\nline2"
+            }
+        }
+        result = execute_apex("var -u user", "System.debug('test');")
+        get_ipython().push.assert_called()
+        push_args = get_ipython().push.call_args[0][0]
+        assert 'var' in push_args, "should assign var to the scope"
+        assert push_args['var'] == "line1\nline2", "should set the var to the log lines"
+
 
 if __name__ == '__main__':
     unittest.main()
