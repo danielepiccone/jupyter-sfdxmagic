@@ -12,6 +12,7 @@ description = open(
 
 dependencies = ["jupyterlab", "pandas"]
 
+
 setup(
     name="sfdxmagic",
     py_modules=["sfdxmagic"],
