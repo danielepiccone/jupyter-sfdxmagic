@@ -15,22 +15,16 @@ def parse_magic_invocation(line):
     %%sfdx:cmd {var?} {...options}
 
     """
-    args = {
-        "variable": None,
-        "sfdx_args": ""
-    }
+    args = {"variable": None, "sfdx_args": ""}
 
     line = line.strip()
 
-    if line.startswith('-'):
-        args['sfdx_args'] = line
+    if line.startswith("-"):
+        args["sfdx_args"] = line
         return args
     else:
         [variable, *sfdx_args] = line.split(" ")
-        args = {
-            "variable": variable,
-            "sfdx_args": " ".join(sfdx_args),
-        }
+        args = {"variable": variable, "sfdx_args": " ".join(sfdx_args)}
         return args
 
 
@@ -42,7 +36,8 @@ def execute_query(line, query):
     )
     raise_for_status(response)
     results_df = pd.DataFrame(response["result"]["records"])
-    del results_df["attributes"]
+    if results_df.empty is False:
+        del results_df["attributes"]
 
     if args.get("variable"):
         get_ipython().push({args.get("variable"): results_df})
@@ -58,14 +53,14 @@ def execute_apex(line, query):
     args = parse_magic_invocation(line)
 
     with tempfile.NamedTemporaryFile() as fp:
-        fp.write(query.encode('utf8'))
+        fp.write(query.encode("utf8"))
         fp.flush()
         response = execute_sfdx(
-            'force:apex:execute -f {} {}'.format(fp.name, args.get("sfdx_args"))
+            "force:apex:execute -f {} {}".format(fp.name, args.get("sfdx_args"))
         )
 
-    if response['status'] == 0:
-        loglines = response['result']['logs']
+    if response["status"] == 0:
+        loglines = response["result"]["logs"]
         if args.get("variable"):
             get_ipython().push({args.get("variable"): loglines})
             return None

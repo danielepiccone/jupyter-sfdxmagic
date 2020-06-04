@@ -28,6 +28,16 @@ class TestQuery(unittest.TestCase):
             'force:data:soql:query -q "SELECT Id FROM Account LIMIT 1" -u user'
         )
         assert type(result) == pd.DataFrame
+        assert result.empty == False
+
+    def test_no_rows(self, execute_sfdx):
+        execute_sfdx.return_value = {"status": 0, "result": {"records": []}}
+        result = execute_query("-u user", "SELECT Id FROM Account LIMIT 1")
+        execute_sfdx.assert_called_with(
+            'force:data:soql:query -q "SELECT Id FROM Account LIMIT 1" -u user'
+        )
+        assert type(result) == pd.DataFrame
+        assert result.empty == True
 
     @patch("sfdxmagic.functions.get_ipython")
     def test_assign_to_scope(self, get_ipython, execute_sfdx):
