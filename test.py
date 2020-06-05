@@ -61,7 +61,7 @@ class TestAnonymousApex(unittest.TestCase):
         sfdx_args = execute_sfdx.call_args[0][0]
         assert sfdx_args.startswith("force:apex:execute"), "should call apex execution"
         assert sfdx_args.endswith("-u user"), "should executed against a specific org"
-        assert type(result) == str
+        assert type(result) == list
 
     @patch("sfdxmagic.functions.get_ipython")
     def test_assign_to_scope(self, get_ipython, execute_sfdx):
@@ -70,7 +70,10 @@ class TestAnonymousApex(unittest.TestCase):
         get_ipython().push.assert_called()
         push_args = get_ipython().push.call_args[0][0]
         assert "var" in push_args, "should assign var to the scope"
-        assert push_args["var"] == "line1\nline2", "should set the var to the log lines"
+        assert push_args["var"] == [
+            "line1",
+            "line2",
+        ], "should set the var to the log lines"
 
 
 if __name__ == "__main__":

@@ -60,7 +60,7 @@ def execute_apex(line, query):
         )
 
     if response["status"] == 0:
-        loglines = response["result"]["logs"]
+        loglines = response["result"]["logs"].splitlines()
         if args.get("variable"):
             get_ipython().push({args.get("variable"): loglines})
             return None
