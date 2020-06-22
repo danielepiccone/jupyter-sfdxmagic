@@ -1,5 +1,5 @@
 """Magic wrapper to execute APEX and SOQL in notebooks"""
-__version__ = '0.0.1'
+__version__ = '0.0.2'
 
 from sfdxmagic.functions import execute_apex, execute_query
 

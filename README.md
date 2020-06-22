@@ -6,7 +6,18 @@ This is a set of cell magics to run anonymous APEX code in notebooks and perform
 
 ## Prerequisite
 
-Authentication and connection to Salesforce are performed through sfdx, the magics assume sfdx is correctly installed and at least the default organization has been authorized.
+The connection to Salesforce are performed through sfdx, the magic assume sfdx is correctly installed and at least the default organization has been authorized.
+
+The module assumes to be in the same environment where `jupyterlab` is installed
+
+## Installation
+
+Through pip
+
+```
+$ pyhthon -m pip install sfdxmagic
+```
+
 
 ## Usage
 
@@ -38,7 +49,7 @@ Perform a SOQL query:
 
 ```
 %%sfdx:query
-SELECT Id FROM Lead LIMIT 10
+SELECT Id, Name FROM Lead LIMIT 10
 ```
 
 Append the name of a variable to return the records as a pandas DataFrame
@@ -50,14 +61,23 @@ Append the name of a variable to return the records as a pandas DataFrame
 
 ### General invocation
 
-All the parameters passed to the commands are forwarded to sfdx, this allows to combine results from multiple organizations for analysis.
+Parameters passed to the commands are forwarded to the sfdx cli, this allows to retrieve results from multiple organizations in the same notebook.
 
 ```
-%%sfdx:query df_records_org1 --targetusername org1
+%%sfdx:query df_records_org1 --targetusername username@domain.com.org1
 ...
 ```
 
 ```
-%%sfdx:query df_records_org2 --targetusername org2
+%%sfdx:query df_records_org2 --targetusername username@domain.com.org2
 ...
 ```
+
+## Known issues
+
+- Missing subquery handling, results are not unpacked and the projection is lost
+
+## License
+
+MIT
+
