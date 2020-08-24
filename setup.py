@@ -16,11 +16,11 @@ dependencies = ["jupyterlab", "pandas"]
 setup(
     name="sfdxmagic",
     packages=find_packages(),
-    py_modules=['sfdxmagic'],
+    py_modules=["sfdxmagic"],
     version=version,
     description="Execute cells with SOQL and APEX within Jupyter notebooks",
     long_description=description,
-    long_description_content_type='text/markdown',
+    long_description_content_type="text/markdown",
     author="Daniele Piccone",
     author_email="mild.taste@gmail.com",
     keywords=["soql", "jupyter", "salesforce", "apex"],
