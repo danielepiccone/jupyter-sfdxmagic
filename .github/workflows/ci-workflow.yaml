@@ -2,36 +2,30 @@ name: Run the specs
 on: [push, workflow_dispatch]
 
 jobs:
-  test:
-    name: Test
+  ci:
+    name: Test and check formatting
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        python-version: [3.5, 3.6, 3.7, 3.8]
+        python-version: [3.6, 3.7, 3.8]
 
     steps:
-      # Check out the repository
       - uses: actions/checkout@v2
 
-      # Debug
-      - name: List repo
-        run: ls -R
-
-      - name: Check env
-        run: env
-
-      # Setup python
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
 
-      # Install dependencies
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: |
+          pip install -r requirements.txt
+          pip install black --quiet
 
-      # Run tests
+      - name: Check formatting
+        run: black . --check
+
       - name: Run tests
         run: python test.py
 
